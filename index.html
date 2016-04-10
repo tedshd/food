@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>蔬食 & 輕食 & 小吃地圖</title>
+<meta name="description" content="蔬食 & 輕食 & 小吃地圖">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css">
+<link rel="stylesheet" href="css/popup_view.css">
+<style>
+html {
+    height: 100%;
+}
+body {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+h1 {
+    display: inline-block;
+    color: #ddd;
+}
+header {
+    padding: .5em;
+    background: #333;
+}
+nav {
+    display: inline-block;
+}
+nav a {
+    position: relative;
+    display: inline-block;
+    color: #aaa;
+    text-decoration: none;
+}
+nav a:hover {
+    color: #ff8800;
+}
+nav a:hover:after {
+    border-bottom: solid #ff8800 1px;
+}
+nav a:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 0;
+    border-bottom: solid #aaa 1px;
+}
+#map-canvas {
+    height: calc(100% - 2em);
+}
+#gps {
+    position: absolute;
+    top: .5em;
+    right: .5em;
+    width: 16px;
+    height: 16px;
+}
+#gps:hover {
+    cursor: pointer;
+}
+#gps.active svg path {
+    fill: #d00;
+}
+#popup section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 320px;
+    height: 240px;
+    padding: .5em;
+    box-sizing: border-box;
+    line-height: 1.5;
+    text-align: center;
+    color: #fff;
+}
+</style>
+</head>
+<body>
+    <header>
+        <h1>蔬食 & 輕食 & 小吃地圖</h1>
+        <nav>
+            <a id="about" href="javascript:void(0)">關於這地圖</a>
+        </nav>
+    </header>
+    <section id="map-canvas"></section>
+    <div id="gps" class="">
+        <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+        <path stroke="null" d="m7.94737,5.05742c-1.58947,0 -2.88995,1.30048 -2.88995,2.88995c0,1.58947 1.30048,2.88995 2.88995,2.88995c1.58947,0 2.88995,-1.30048 2.88995,-2.88995c0,-1.58947 -1.30048,-2.88995 -2.88995,-2.88995l0,0zm6.43014,2.16746c-0.36124,-3.03445 -2.74545,-5.41866 -5.70766,-5.70766l0,-1.51722l-1.44498,0l0,1.51722c-3.03445,0.289 -5.41866,2.67321 -5.70766,5.70766l-1.51722,0l0,1.44498l1.51722,0c0.36124,3.03445 2.74545,5.41866 5.70766,5.70766l0,1.51722l1.44498,0l0,-1.51722c3.03445,-0.36124 5.41866,-2.74545 5.70766,-5.70766l1.51722,0l0,-1.44498l-1.51722,0l0,0zm-6.43014,5.7799c-2.8177,0 -5.05742,-2.23971 -5.05742,-5.05742c0,-2.8177 2.23971,-5.05742 5.05742,-5.05742c2.8177,0 5.05742,2.23971 5.05742,5.05742c0,2.8177 -2.23971,5.05742 -5.05742,5.05742l0,0z" id="Shape" fill="#fff"/>
+        </svg>
+    </div>
+    <div id="popup" class="pop_up popup_hide">
+        <section>
+            這是一個含有蔬食或輕食或甜點小吃類的地圖<br>
+            歡迎提供上述類型的店來豐富地圖<br>
+            Email: tedshd gmail
+        </section>
+        <div class="pop_up_close"></div>
+    </div>
+</body>
+<script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+<script src="js/markerclusterer.js"></script>
+<script src="js/popup_view.js"></script>
+<script>
+var popupView = new popup();
+
+document.getElementById('about').addEventListener('click', function() {
+    popupView.show(document.querySelector('#popup'));
+});
+
+var map,
+    markerCluster,
+    marker,
+    markerGPS,
+    gpsRun,
+    marks = [],
+    prev_infowindow = false;
+function initialize() {
+    var latlng = new google.maps.LatLng(23.69781, 120.96051499999999),
+        mapOptions = {
+            zoom: 7,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    ajax();
+}
+
+function ajax() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'food.json');
+    // xhr.open('GET', 'http://opendata.hccg.gov.tw/dataset/056f201e-b4b8-403e-985d-bcb4f9f13b3f/resource/bb065c66-07d4-4064-824a-5f3c0539c476/download/20151116195315864.json');
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.send();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                ui(JSON.parse(xhr.responseText));
+            } else {
+                fail();
+            }
+        } else {
+            fail();
+        }
+    }
+}
+
+function ui(data) {
+    for (var i = 0; i < data.length; i++) {
+        var food = data[i];
+        var pos = {
+            lat: Number(food.lat),
+            lng: Number(food.lng)
+        };
+        marker = new google.maps.Marker({
+            icon: 'ic_food.svg',
+            map: map,
+            draggable: false,
+            position: pos
+        });
+        var desc = '';
+        for (var j = 0; j < food.description.length; j++) {
+            desc = desc + food.description[j] + '<br>';
+        }
+        var content = food.name + '<br>' + desc;
+        var infowindow = new google.maps.InfoWindow();
+        infowindow.setContent(content);
+        google.maps.event.addListener(
+            marker,
+            'click',
+            (function (marker, content, infowindow) {
+                return function() {
+                    map.setZoom(18);
+                    // map.setCenter({
+                    //     lat: pos.lat,
+                    //     lng: pos.lng
+                    // });
+                    if(prev_infowindow) {
+                        prev_infowindow.close();
+                    }
+                    infowindow.setContent(content);
+                    prev_infowindow = infowindow;
+                    infowindow.open(map, marker);
+                };
+            })(marker, content, infowindow)
+        );
+        marks.push(marker);
+        marker.setMap(map);
+    }
+    markerCluster = new MarkerClusterer(map, marks);
+}
+
+function fail() {
+    // body...
+}
+function gps() {
+    if (document.getElementById('gps').classList.contains('active')) {
+        document.getElementById('gps').classList.remove('active');
+        document.getElementById('gps').blur();
+        clearInterval(gpsRun);
+        return;
+    }
+    if (navigator.geolocation) {
+        document.getElementById('gps').classList.add('active');
+        navigator.geolocation.getCurrentPosition(showPosition, showPositionError);
+
+        function showPosition(position) {
+            var position = position;
+            gpsRun = setInterval(function() {
+                var latituded4 = position.coords.latitude,
+                    longituded4 = position.coords.longitude;
+                console.log(latituded4);
+                console.log(longituded4);
+                map.setZoom(18);
+                map.setCenter({
+                    lat: latituded4,
+                    lng: longituded4
+                });
+                if (markerGPS) {
+                    markerGPS.setMap(null);
+                }
+                markerGPS = new google.maps.Marker({
+                    icon: 'ic_gps.svg',
+                    map: map,
+                    draggable: false,
+                    position: {
+                        lat: latituded4,
+                        lng: longituded4
+                    }
+                });
+            }, 3000);
+        }
+
+        function showPositionError(error) {
+            document.getElementById('gps').classList.remove('active');
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log('User denied the request for Geolocation.');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log('Location information is unavailable.');
+                    break;
+                case error.TIMEOUT:
+                    console.log('The request to get user location timed out.');
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.log('An unknown error occurred.');
+                    break;
+            }
+        }
+    } else {
+        // google.maps.event.addDomListener(window, 'load', initialize(latituded4, longituded4));
+    }
+}
+google.maps.event.addDomListener(window, 'load', initialize);
+document.getElementById('gps').addEventListener('click', gps);
+</script>
+</html>
