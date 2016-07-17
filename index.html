@@ -80,6 +80,16 @@ nav a:after {
     color: #fff;
 }
 </style>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-49247550-5', 'auto');
+  ga('send', 'pageview');
+
+</script>
 </head>
 <body>
     <header>
@@ -175,7 +185,7 @@ function ui(data) {
             'click',
             (function (marker, content, infowindow) {
                 return function() {
-                    map.setZoom(18);
+                    // map.setZoom(18);
                     // map.setCenter({
                     //     lat: pos.lat,
                     //     lng: pos.lng
@@ -216,7 +226,6 @@ function gps() {
                     longituded4 = position.coords.longitude;
                 console.log(latituded4);
                 console.log(longituded4);
-                map.setZoom(18);
                 map.setCenter({
                     lat: latituded4,
                     lng: longituded4

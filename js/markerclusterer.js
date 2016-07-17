@@ -203,7 +203,8 @@ function MarkerClusterer(map, opt_markers, opt_options) {
 // MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ =
 //     'http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/' +
 //     'images/m';
-MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ = 'images/m';
+//     TODO
+MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ = '/service/food/images/m';
 
 
 /**
